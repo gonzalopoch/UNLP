@@ -24,6 +24,7 @@ GM_registerMenuCommand('Adaptar página', previewPage, "A");
 GM_registerMenuCommand('Eliminar datos almacenados', delLocalSite, "L");
 GM_registerMenuCommand('Importar configuración', importJson, "I");
 GM_registerMenuCommand('Exportar configuración', exportJson, "X");
+GM_registerMenuCommand('Almacenar paginas candidatas en sessionStorage', saveCandidates);
 
 //-----------------------------------------------------------
 // VARIABLES GLOBALES
@@ -104,12 +105,6 @@ function initializeEdition() {
 		}
 	});
 
-	if (confirm("Desea almacenar las páginas candidatas en el sessionStorage?")) {
-		saveCandidates();
-	}
-	else{
-		alert("No se almacenarán las páginas candidatas.");
-	}
 	checkStatus();
 }
 
@@ -126,7 +121,7 @@ function checkStatus(){
 			if (confirm("Error de conexión: desea continuar la navegación?")) {
 				if(sessionStorage[this.href]){
 					//e.preventDefault();
-					document.querySelector('html').innerHTML = sessionStorage[this.href]; // Reemplazo el html acutal por el correspondiente a href.
+					document.querySelector('body').innerHTML = sessionStorage[this.href]; // Reemplazo el html acutal por el correspondiente a href.
 				}
 				else{
 					//e.preventDefault();
@@ -150,7 +145,7 @@ function checkStatus(){
 	});
 }
 
-//Función que permite almacenar en sessionStorage todas las páginas candidato cacheables, filtrando las que pertenecen al dominio 
+//Función que permite almacenar en sessionStorage todas las páginas candidato cacheables, filtrando las que pertenecen al dominio
 //en el que estoy y que no son enlaces internos. Luego, almacena también la página actual.
 function saveCandidates(){
 	var aTag = document.getElementsByTagName("a");
@@ -158,12 +153,13 @@ function saveCandidates(){
     var substring = "#";
     var host = location.hostname; // Obtengo el hostname correspondiente al sitio actual.
 	var url = [];
-	var max = aTag.length; // Determino la cantidad de elementos <a> del sitio (fuera del for para no calcularlo más de una vez).
+	var max = aTag.length + 1; // Determino la cantidad de elementos <a> del sitio (fuera del for para no calcularlo más de una vez).
+    url.push(location.href); //Guardo ruta actual en URL
 	for (i=0; i < max; i++){
 		url.push(aTag[i].href); // Almaceno el contenido de href de cada una de las <a> de la página actual en url[i].
 		// Si la url no es vacía, no se corresponde con un enlace interno (contienen '#') y pertenece el dominio actual (host).
 		if ((url[i]!=="") && !(url[i].includes(substring)) && (url[i].includes(host))){
-			var $urlAux = url [i];
+            var $urlAux = url [i];
 			j++;
 			// AJAX request de tipo GET, que almacena en sessionStorage el html completo de $urlAux.
 			$.ajax({
@@ -177,11 +173,6 @@ function saveCandidates(){
 			});
 		}
 	}
-	//Guardo la página actual
-	j++;
-	sessionStorage[location.href] = document.querySelector('html');
-	console.log(j + ' (página actual) : ' + location.href + ' almacenado en sessionStorage.');
-	alert('Se almacenaron ' + j + ' páginas en el sessionStorage.')
 }
 
 // Funcion que arma la tabla con los elementos cargados en el JSON
